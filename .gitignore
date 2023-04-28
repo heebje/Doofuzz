@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 *.vs
 *.exe
 *.sdf
@@ -26,37 +25,3 @@ Icon?
 *.wav
 *.RPP-bak
 /iir1
-=======
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
->>>>>>> 6dd009a8f7a77c47dd67b0f6fbf6f4bd078ade0a
