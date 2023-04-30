@@ -299,6 +299,11 @@
     <ClInclude Include="..\..\..\IPlug\IPlug_include_in_plug_hdr.h" />
     <ClInclude Include="..\..\..\IPlug\IPlug_include_in_plug_src.h" />
     <ClInclude Include="..\..\..\IPlug\VST2\IPlugVST2.h" />
+    <ClInclude Include="..\Doofuzz_Common.h" />
+    <ClInclude Include="..\Doofuzz_CornerResizers.h" />
+    <ClInclude Include="..\Doofuzz_ParamSmoother.h" />
+    <ClInclude Include="..\Doofuzz_Stereoiser.h" />
+    <ClInclude Include="..\Doofuzz_WaveShaper.h" />
     <ClInclude Include="..\iir1\Iir.h" />
     <ClInclude Include="..\iir1\iir\Biquad.h" />
     <ClInclude Include="..\iir1\iir\Butterworth.h" />
@@ -314,7 +319,6 @@
     <ClInclude Include="..\iir1\iir\State.h" />
     <ClInclude Include="..\iir1\iir\Types.h" />
     <ClInclude Include="..\Doofuzz.h" />
-    <ClInclude Include="..\NAM_Styling.h" />
     <ClInclude Include="..\resources\resource.h" />
   </ItemGroup>
   <ItemGroup>

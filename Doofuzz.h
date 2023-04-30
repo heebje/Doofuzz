@@ -9,6 +9,7 @@
 #include "Oversampler.h"
 #include "Doofuzz_ParamSmoother.h"
 #include "Doofuzz_WaveShaper.h"
+#include <Doofuzz_Stereoiser.h>
 
 using namespace iplug;
 using namespace igraphics;
@@ -26,7 +27,8 @@ const double  kScoopBandwidth   =     2.4;
 
 enum EParams {
   // Main parameters (the big knobs):
-  kParamDrive = 0,
+  kParamWidth = 0,
+  kParamDrive,
   kParamRip,
   kParamTone,
   kParamOutput,
@@ -37,6 +39,7 @@ enum EParams {
 };
 
 char* paramNames[kNumParams] = {
+  "Width",
   "Drive",
   "Rip",
   "Tone",
@@ -46,6 +49,7 @@ char* paramNames[kNumParams] = {
 };
 
 char* paramLabels[kNumParams] = {
+  "Width",
   "Drive",
   "Rip",
   "Tone",
@@ -55,6 +59,7 @@ char* paramLabels[kNumParams] = {
 };
 
 char* paramToolTips[kNumParams] = {
+  "Width:\nControls the width of the stereoiser",
   "Drive (dB):\nControls the distortion level",
   "Rip:\nControls the starvation of the transistors",
   "Tone:\nControls the brightness",
@@ -86,7 +91,8 @@ public:
 VALUES paramValues[kNumParams] = {  // (default, minimum, maximum, step)
 
   // Main (big) knobs:
-  VALUES(  48.0,   0.0,   +96.0, 0.01), // Drive, in dB
+  VALUES(   0.5,   0.0,     1.0, 0.01), // Width
+  VALUES(  48.0,   0.0,    96.0, 0.01), // Drive, in dB
   VALUES(   0.5,   0.0,     1.0, 0.01), // Rip
   VALUES(4000.0, 800.0, 20000.0, 0.01), // Tone
   VALUES( -18.0, -54.0,   +18.0, 0.01), // Output, in dB
@@ -97,13 +103,14 @@ VALUES paramValues[kNumParams] = {  // (default, minimum, maximum, step)
 };
 
 IRECT controlCoordinates[kNumParams] = {
-  IRECT(60 + 0*84, 100, 123 + 0*84, 215), // Drive
-  IRECT(60 + 1*84, 100, 123 + 1*84, 215), // Rip
-  IRECT(60 + 2*84, 100, 123 + 2*84, 215), // Tone
-  IRECT(60 + 3*84, 100, 123 + 3*84, 215), // Output
+  IRECT(60 + 0*84, 100, 123 + 0*84, 215), // Width
+  IRECT(60 + 1*84, 100, 123 + 1*84, 215), // Drive
+  IRECT(60 + 2*84, 100, 123 + 2*84, 215), // Rip
+  IRECT(60 + 3*84, 100, 123 + 3*84, 215), // Tone
+  IRECT(60 + 4*84, 100, 123 + 4*84, 215), // Output
 
-  IRECT(60 + 4*84, 100, 123 + 4*84, 150), // Active
-  IRECT(60 + 4*84, 165, 123 + 4*84, 215), // Oversampling
+  IRECT(60 + 5*84, 100, 123 + 5*84, 150), // Active
+  IRECT(60 + 5*84, 165, 123 + 5*84, 215), // Oversampling
 
  };
 
@@ -115,6 +122,7 @@ private:
   // Smoothed parameter values ////////////////////////////////////////////////
 
   // Main knobs:
+  double  m_Width           =         paramValues[kParamWidth       ].def;  // Width, 0.0..1.0
   double  m_Drive_Real      = DBToAmp(paramValues[kParamDrive       ].def); // Input gain in real terms, from dB
   double  m_Rip             =         paramValues[kParamRip         ].def;
   double  m_Tone            =         paramValues[kParamTone        ].def;
@@ -128,16 +136,18 @@ private:
 
   // Filters etc:
 
-  Iir::Butterworth::HighPass<1>   m_DCBlockBefore [kMaxNumChannels];
-  Iir::Butterworth::HighPass<1>   m_DCBlockAfter  [kMaxNumChannels];
+  Stereoiser                      m_Stereoiser;
 
-  Iir::RBJ::BandShelf             m_Scoop         [kMaxNumChannels];
+  Iir::Butterworth::HighPass<1>   m_DCBlockBefore[kMaxNumChannels];
+  Iir::Butterworth::HighPass<1>   m_DCBlockAfter [kMaxNumChannels];
 
-  Iir::Butterworth::LowPass<1>    m_HighCut       [kMaxNumChannels];
+  Iir::RBJ::BandShelf             m_Scoop        [kMaxNumChannels];
 
-  WaveShaperDoofuzz          m_Waveshaper[kMaxNumChannels];
+  Iir::Butterworth::LowPass<1>    m_HighCut      [kMaxNumChannels];
 
-  OverSampler<sample>             m_Oversampler [kMaxNumChannels] = {
+  WaveShaperDoofuzz               m_Waveshaper   [kMaxNumChannels];
+
+  OverSampler<sample>             m_Oversampler  [kMaxNumChannels] = {
                                     OverSampler(EFactor::k16x, false),
                                     OverSampler(EFactor::k16x, false),
                                   };
@@ -150,7 +160,6 @@ public:
   Doofuzz(const InstanceInfo& info);
   void OnReset() override;
   void OnParamChange(int paramIdx) override;
-  void OnIdle() override;
   void ProcessBlock(sample** inputs, sample** outputs, int nFrames) override;
 
 };

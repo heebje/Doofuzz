@@ -16,7 +16,7 @@
 
 #define SHARED_RESOURCES_SUBPATH  "Doofuzz"
 
-#define PLUG_CHANNEL_IO           "1-1 2-2"
+#define PLUG_CHANNEL_IO           "1-1 1-2 2-2"
 
 #define PLUG_LATENCY              0
 #define PLUG_TYPE                 0
@@ -25,7 +25,7 @@
 #define PLUG_DOES_MPE             0
 #define PLUG_DOES_STATE_CHUNKS    0
 #define PLUG_HAS_UI               1
-#define PLUG_WIDTH                516
+#define PLUG_WIDTH                600
 #define PLUG_HEIGHT               280
 #define PLUG_FPS                  60
 #define PLUG_SHARED_RESOURCES     0

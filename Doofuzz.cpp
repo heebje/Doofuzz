@@ -3,12 +3,9 @@
 #include "IPlug_include_in_plug_src.h"
 #include "IControls.h"
 
-#include "NAM_Styling.h"
 #include "Doofuzz_CornerResizers.h"
 #include "Doofuzz_Common.h"
 
-
-using namespace NAM_Styling;
 using namespace Doofuzz_Common;
 
 Doofuzz::Doofuzz(const InstanceInfo& info): iplug::Plugin(info, MakeConfig(kNumParams, kNumPresets)) {
@@ -33,6 +30,7 @@ Doofuzz::Doofuzz(const InstanceInfo& info): iplug::Plugin(info, MakeConfig(kNumP
       }
 
       // Double:
+      case kParamWidth:
       case kParamRip: {
         GetParam(p)->InitDouble(paramNames [p],
                                 paramValues[p].def,
@@ -88,37 +86,23 @@ Doofuzz::Doofuzz(const InstanceInfo& info): iplug::Plugin(info, MakeConfig(kNumP
     pGraphics->EnableTooltips(true);
 
     pGraphics->AttachCornerResizer(new NAMCornerResizer(IRECT(0, 0, PLUG_WIDTH, PLUG_HEIGHT),
-                                                        24.0,
-                                                        NAM_1,
-                                                        NAM_3.WithOpacity(0.75),
-                                                        NAM_2));
-    pGraphics->AttachControl(new NAMCornerShrinker(24.0,
-                                                   NAM_1,
-                                                   NAM_3.WithOpacity(0.75)));
+                                                        24.0));
+    pGraphics->AttachControl(new NAMCornerShrinker(24.0));
 
-    pGraphics->AttachPanelBackground(COLOR_BLACK);
+    pGraphics->AttachPanelBackground(COLOR_GRAY);
     pGraphics->LoadFont("Roboto-Regular", ROBOTO_FN);
 
-    const auto  b           = pGraphics->GetBounds();
-    const auto  mainArea    = b.GetPadded(-20);
-    const auto  content     = mainArea.GetPadded(-10);
-    const auto  titleHeight = 50.0;
-    const auto  titleLabel  = content.GetFromTop(titleHeight);
-
-    pGraphics->AttachControl(new IVPanelControl(mainArea,
-                                                "",
-                                                style.WithColor(kFG,
-                                                                NAM_1)));
-
-    // auto title = std::string(PLUG_NAME);
-
-    pGraphics->AttachControl(new IVLabelControl(titleLabel,
+    pGraphics->AttachControl(new IVLabelControl(IRECT(30, 30, PLUG_WIDTH-30, 80),
                                                 PLUG_NAME,
-                                                style.WithDrawFrame(false).WithValueText({30,
-                                                  EAlign::Center,
-                                                  NAM_3})));
-
-    pGraphics->AttachControl(new IURLControl(titleLabel.GetMidHPadded(60),
+                                                DEFAULT_STYLE
+                                                  .WithDrawFrame(false)
+                                                  .WithDrawShadows(false)
+                                                  .WithValueText(IText(30))));
+    
+    pGraphics->AttachControl(new IURLControl(IRECT((PLUG_WIDTH - 60.0) / 2.0,
+                                                   30.0,
+                                                   (PLUG_WIDTH + 60.0) / 2.0,
+                                                   80.0),
                                              "",
                                              PLUG_URL_STR));
 
@@ -127,6 +111,7 @@ Doofuzz::Doofuzz(const InstanceInfo& info): iplug::Plugin(info, MakeConfig(kNumP
       switch(p) {
 
         // Big knobs: /////////////////////////////////////////////////////////
+        case kParamWidth:
         case kParamDrive:
         case kParamRip:
         case kParamTone:
@@ -134,7 +119,9 @@ Doofuzz::Doofuzz(const InstanceInfo& info): iplug::Plugin(info, MakeConfig(kNumP
           pGraphics->AttachControl(new IVKnobControl(controlCoordinates[p],
                                                      p,
                                                      paramLabels[p],
-                                                     style))->SetTooltip(paramToolTips[p]);
+                                                     DEFAULT_STYLE
+                                                       .WithShowLabel(true)
+                                                       .WithShowValue(true)))->SetTooltip(paramToolTips[p]);
           break;
         }
 
@@ -143,7 +130,7 @@ Doofuzz::Doofuzz(const InstanceInfo& info): iplug::Plugin(info, MakeConfig(kNumP
           pGraphics->AttachControl(new IVToggleControl(controlCoordinates[p],
                                                        p,
                                                        paramLabels[p],
-                                                       style.WithShowLabel(false),
+                                                       DEFAULT_STYLE.WithShowLabel(false),
                                                        "off",
                                                        "on"))->SetTooltip(paramToolTips[p]);
           break;
@@ -154,7 +141,7 @@ Doofuzz::Doofuzz(const InstanceInfo& info): iplug::Plugin(info, MakeConfig(kNumP
           pGraphics->AttachControl(new IVToggleControl(controlCoordinates[p],
                                                        p,
                                                        paramLabels[p],
-                                                       style.WithShowLabel(false),
+                                                       DEFAULT_STYLE.WithShowLabel(false),
                                                        "none",
                                                        "16x"))->SetTooltip(paramToolTips[p]);
           break;
@@ -167,26 +154,6 @@ Doofuzz::Doofuzz(const InstanceInfo& info): iplug::Plugin(info, MakeConfig(kNumP
       }
 
     }
-
-    /*
-    // EQ Plot:
-
-    auto plotPanel = IRECT(45,230,PLUG_WIDTH-45,PLUG_HEIGHT-45);
-
-    pGraphics->AttachControl(new IPanelControl(plotPanel,
-                                                IPattern(NAM_2.WithContrast(-0.75))
-                                              ));
-
-    m_Plot = pGraphics->AttachControl(new IVPlotControl(plotPanel,
-                                                        {
-                                                          { NAM_2,
-                                                            [&](double x) -> double {
-                                                              return m_PlotValues[int(x * (PLUG_WIDTH-1))];
-                                                            }
-                                                          }
-                                                        },
-                                                        pGraphics->Width()));
-    m_Plot->SetBlend(IBlend(EBlend::Default, 0.75));*/
 
     updateKnobs();
 
@@ -232,116 +199,79 @@ void Doofuzz::OnParamChange(int paramIdx) {
 
 }
 
-void Doofuzz::OnIdle() {
-  /*if (m_PlotNeedsRecalc && m_Plot && GetUI()) {
-
-    if (m_Active) {
-
-      const double sr = GetSampleRate();
-
-      m_LowCut    [kPlotChannel].setup(sr, getLowCutFreq());
-      m_LowShelf  [kPlotChannel].setup(sr, getLowShelfFreq(),   getLowShelfBoost(),   kLowBoostSlope);
-
-      m_MidBefore [kPlotChannel].setup(sr, getMidFreq(),        getMidBefore_dB(),    getMidBandwidth());
-      m_MidAfter  [kPlotChannel].setup(sr, getMidFreq(),        getMidAfter_dB(),     getMidBandwidth());
-
-      m_HighCut   [kPlotChannel].setup(sr, getHighCutFreq());
-      m_HighShelf [kPlotChannel].setup(sr, getHighShelfFreq(),  getHighShelfBoost(),  kHighBoostSlope);
-
-      m_DCBlock   [kPlotChannel].setup(sr, kDCBlockFreq);
-
-      const double ln1000 = std::log(1000.0);
-
-      const double  maxBoost = DBToAmp(std::max({ getLowShelfBoost(),
-                                                  getMidBefore_dB(),
-                                                  getHighShelfBoost() }));
-
-      for (int s = 0; s < PLUG_WIDTH; s++) {
-        double f = 20.0 * exp(ln1000 * s / (PLUG_WIDTH)) / sr;
-        m_PlotValues[s] = std::log(abs(m_LowCut   [kPlotChannel].response(f))
-                                 * abs(m_LowShelf [kPlotChannel].response(f))
-
-                                 * abs(m_MidBefore[kPlotChannel].response(f))
-                                 * abs(m_MidAfter [kPlotChannel].response(f))
-
-                                 * abs(m_HighCut  [kPlotChannel].response(f))
-                                 * abs(m_HighShelf[kPlotChannel].response(f))
-
-                                 * abs(m_DCBlock  [kPlotChannel].response(f))
-
-                                 / maxBoost
-                                  ) * 0.5 + 0.5;
-
-      }
-    } else {
-      for (int s = 0; s < PLUG_WIDTH; s++) {
-        m_PlotValues[s] = 0.0;
-      }
-    }
-
-    m_PlotNeedsRecalc = false;
-    m_Plot->SetDirty(false);
-
-  }*/
-}
-
 void Doofuzz::ProcessBlock(sample** inputs, sample** outputs, int nFrames) {
 
-  // const double  sr        = GetSampleRate();
-  const int     nInChans  = NInChansConnected();
-  const int     nOutChans = NOutChansConnected();
+  const int     nInChans  = std::min(kMaxNumChannels, NInChansConnected());
+  const int     nOutChans = std::min(kMaxNumChannels, NOutChansConnected());
   const int     nMaxChans = std::max(nInChans, nOutChans);
 
   for (int s = 0; s < nFrames; s++) {
 
     updateStages(false);
 
-    for (int ch = 0; ch < nMaxChans; ch++) {
+    if (m_Active == 0.0) {
 
-      if ((nOutChans > nInChans) && (ch == 1)) { // The second output channel in the "1-2" situation
-        outputs[1][s] = outputs[0][s]; // Simply copy
+      for (int ch = 0; ch < nMaxChans; ch++) {
+        outputs[std::min(ch, nOutChans-1)][s] = inputs[std::min(ch, nInChans-1)][s];
+      }
+
+    } else {
+
+      // Active: //////////////////////////////////////////////////////////////
+
+      sample x[kMaxNumChannels];  // Scratch area
+
+      // Stereoise first:
+
+      if (nInChans == kMaxNumChannels) {
+
+        assert(nOutChans == kMaxNumChannels);   // Can't have a "2-1" situation, so this MUST be "2-2"
+        m_Stereoiser.processFrame(inputs[0][s], inputs[1][s], &x[0], &x[1]);
 
       } else {
 
-        if (m_Active == 0.0) {
+        m_Stereoiser.processFrame(inputs[0][s], inputs[0][s], &x[0], &x[1]);
 
-          // Bypassed: ////////////////////////////////////////////////////////
+      }
 
-          outputs[ch][s] = inputs[ch][s];
+      ///////////////////////////////////////////////////////////////////////////
 
-        } else {
+      for (int ch = 0; ch < nMaxChans; ch++) {
 
-          outputs[ch][s] =
-            m_Output_Real *
-              -m_DCBlockAfter[ch].filter( // Minus, because this filter erroneously inverts polarity.
-                                          // I reported this bug, but the developer denied there was a problem.
-                m_HighCut[ch].filter(
-                  m_Scoop[ch].filter(
+        x[ch] =
+          m_Output_Real *
+            -m_DCBlockAfter[ch].filter( // Minus, because this filter erroneously inverts polarity.
+                                        // I reported this bug, but the developer denied there was a problem.
+              m_HighCut[ch].filter(
+                m_Scoop[ch].filter(
 
-                    m_Oversampler[ch].Process(
-                      m_Drive_Real *
-                        -m_DCBlockBefore[ch].filter(  // Minus, because this filter erroneously inverts polarity.
-                                                      // I reported this bug, but the developer denied there was a problem.
-                          inputs[ch][s]),
-                      [&](sample input) {
-                        return m_Waveshaper[ch].processAudioSample(input);
-                      }
-                    )
+                  m_Oversampler[ch].Process(
+                    m_Drive_Real *
+                      -m_DCBlockBefore[ch].filter(  // Minus, because this filter erroneously inverts polarity.
+                                                    // I reported this bug, but the developer denied there was a problem.
+                        x[ch]), // Use earlier stereoised values
+                    [&](sample input) {
+                      return m_Waveshaper[ch].processAudioSample(input);
+                    }
                   )
                 )
-              );
+              )
+            );
 
-          if (m_Active != 1.0) {
+        if (m_Active != 1.0) {
 
-            // Transition: ////////////////////////////////////////////////////
+          // Transition: ////////////////////////////////////////////////////
 
-            outputs[ch][s] =
-              ((1.0 - m_Active) * inputs [ch][s]) +
-              ((m_Active)       * outputs[ch][s]);
+          x[ch] =
+            ((1.0 - m_Active) * inputs[std::min(ch, nInChans-1)][s]) +
+            ((m_Active)       * x[ch]);
 
-          }
         }
+
+        outputs[std::min(ch, nOutChans-1)][s] = x[ch];
+
       }
+
     }
   }
 }
@@ -386,6 +316,10 @@ inline void Doofuzz::updateStages(bool _resetting) {
 
   // Non-parameter-related stages:
   if (_resetting) {
+
+    m_Stereoiser.reset(sr);
+    m_Stereoiser.setWidth(m_Width);
+
     for (int ch = 0; ch < kMaxNumChannels; ch++) {
 
       m_DCBlockBefore[ch].setup(sr, kDCBlockFreq);
@@ -409,6 +343,15 @@ inline void Doofuzz::updateStages(bool _resetting) {
   for (int p = 0; p < kNumParams; p++) {
 
     switch (p) {
+
+      case kParamWidth: {
+        double v;
+        if (smoother.get(p, v) || _resetting) {
+          m_Width = v;
+          m_Stereoiser.setWidth(v);
+        }
+        break;
+      }
 
       case kParamDrive: {
         double v;
@@ -482,7 +425,6 @@ inline void Doofuzz::updateStages(bool _resetting) {
         double v;
         if (smoother.get(p, v) || _resetting) {
           m_Active = v;
-          // m_PlotNeedsRecalc = true;
         }
         break;
       }

@@ -9,10 +9,11 @@ using namespace Doofuzz_Common;
 class WaveShaperDoofuzz {
   public:
 
-  inline void reset(const double _sampleRate) {
+  inline double reset(const double _sampleRate) {
     for (int i = 0; i < kNumEnvFollowers; i++) {
       envelopeFollower[i].setup(_sampleRate, envFollowerFreq[i]);
     }
+    return _sampleRate;
   }
 
   inline double setRip(const double _rip) {

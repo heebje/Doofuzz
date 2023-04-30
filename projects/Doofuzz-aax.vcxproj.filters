@@ -273,7 +273,6 @@
     <ClInclude Include="..\iir1\iir\Types.h">
       <Filter>Iir1\iir</Filter>
     </ClInclude>
-    <ClInclude Include="..\NAM_Styling.h" />
   </ItemGroup>
   <ItemGroup>
     <Filter Include="resources">

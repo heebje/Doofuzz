@@ -518,7 +518,6 @@
     <ClInclude Include="..\iir1\iir\State.h" />
     <ClInclude Include="..\iir1\iir\Types.h" />
     <ClInclude Include="..\Doofuzz.h" />
-    <ClInclude Include="..\NAM_Styling.h" />
     <ClInclude Include="..\resources\resource.h" />
   </ItemGroup>
   <ItemGroup>
