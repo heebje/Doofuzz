@@ -347,8 +347,7 @@ inline void Doofuzz::updateStages(bool _resetting) {
       case kParamWidth: {
         double v;
         if (smoother.get(p, v) || _resetting) {
-          m_Width = v;
-          m_Stereoiser.setWidth(v);
+          m_Stereoiser.setWidth(m_Width = v);
         }
         break;
       }
